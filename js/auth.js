@@ -1,24 +1,46 @@
-document.getElementById("login-form").addEventListener("submit", function(event) {
-    event.preventDefault();
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("loginForm").addEventListener("submit", function(event) {
+        event.preventDefault();
 
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+        const identifier = document.getElementById("identifier").value;
+        const password = document.getElementById("password").value;
 
-    fetch("http://127.0.0.1:8000/api/login/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email: email, password: password })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.token) {
-            localStorage.setItem("token", data.token); // Store JWT token
-            window.location.href = "dashboard.html"; // Redirect to dashboard
-        } else {
-            document.getElementById("error-message").textContent = "Invalid credentials!";
+        // Validation des champs
+        if (identifier.trim() === "" || password.trim() === "") {
+            document.getElementById("error-message").textContent = "Please enter both username/email and password.";
+            return;
         }
-    })
-    .catch(error => console.error("Error:", error));
+
+        // Envoyer la requête POST à l'API de connexion
+        fetch("http://127.0.0.1:8000/login/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ identifier: identifier, password: password })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Invalid credentials');
+            }
+        })
+        .then(data => {
+            if (data.access_token && data.refresh_token) {
+                // Stocker les tokens dans le localStorage
+                localStorage.setItem("access_token", data.access_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
+
+                // Rediriger vers la page Dashboard
+                window.location.href = "dashboard.html";
+            } else {
+                document.getElementById("error-message").textContent = "Invalid username or password.";
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            document.getElementById("error-message").textContent = "An error occurred. Please try again.";
+        });
+    });
 });
