@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         // Envoyer la requête POST à l'API de connexion
-        fetch("http://127.0.0.1:8000/login/", {
+        fetch("http://127.0.0.1:8000/admin-login/", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -20,10 +20,15 @@ document.addEventListener("DOMContentLoaded", function() {
             body: JSON.stringify({ identifier: identifier, password: password })
         })
         .then(response => {
-            if (response.ok) {
+            if (response.status === 403) {
+                // Si le statut est 403, l'utilisateur n'est pas un admin
+                throw new Error("Il semble que vous n'êtes pas un administrateur.");
+            } else if (response.ok) {
+                // Si la réponse est réussie (statut 200-299), retourner les données JSON
                 return response.json();
             } else {
-                throw new Error('Invalid credentials');
+                // Pour les autres erreurs, lever une exception générique
+                throw new Error('Identifiants invalides');
             }
         })
         .then(data => {
@@ -40,7 +45,9 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .catch(error => {
             console.error("Error:", error);
-            document.getElementById("error-message").textContent = "An error occurred. Please try again.";
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = error.message;
+            errorMessage.style.display = 'block'; // Afficher le message d'erreur
         });
     });
 });
